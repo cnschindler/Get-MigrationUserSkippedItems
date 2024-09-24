@@ -3,7 +3,7 @@
 Param(
 [Parameter(Mandatory=$true)]
 [Parameter(ParameterSetName="Detect")]
-[System.IO.DirectoryInfo]$BasePath,
+[System.IO.DirectoryInfo]$BasePath
 )
 
 $LogFolderName = "Get-MigrationUserReport"
@@ -55,6 +55,57 @@ function Write-LogFile
         Write-Host $logLine
     }
 }
+function Confirm-EXOModuleInstalled
+{
+    $EXOModuleInstalled = Get-Module -ListAvailable -Name "ExchangeOnlineManagement" | Sort-Object Version -Descending | Select-Object -First 1
+
+    if ($EXOModuleInstalled.Name -eq "ExchangeOnlineManagement")
+    {
+        $EXOConnection = Get-ConnectionInformation
+
+        if ($EXOConnection.State -ne "Connected")
+        {
+            Connect-ExchangeOnline
+        }
+    }
+
+    else
+    {
+        Write-Host -ForegroundColor Red -Object "Exchange Online Management Module not installed. Please install the module and connect to exchange online before using this script."
+        Exit
+    }
+
+}
+
+Confirm-EXOModuleInstalled
+
+# Build a Datatable
+$Datatable = New-Object System.Data.DataTable
+$Properties = @("Kind","ScoringClassifications","FolderName","Subject")
+
+foreach ($property in $Properties)
+{
+    $Datatable.Columns.Add($property) | Out-Null
+}
+
+$Datatable.Columns.Add("Identity")
 
 $MigrationUsersWithSkippedItems = Get-MigrationUser -Status Synced | Where-Object {$_.SkippedItemCount -gt 0}
 
+ForEach ($User in $MigrationUsersWithSkippedItems)
+{
+    $SkippedItems = (Get-MigrationUserStatistics -Identity $User.Identity -IncludeSkippedItems).SkippedItems | Select-Object $Properties
+
+    foreach ($Item in $SkippedItems)
+    {
+        $row = $Datatable.NewRow()
+        $row.Identity = $User.Identity
+        $row.Kind = $item.Kind
+        $row.ScoringClassifications = $item.ScoringClassifications
+        $row.FolderName = $item.FolderName
+        $row.Subject = $item.Subject
+        $Datatable.Rows.Add($row)
+    }
+}
+
+$Datatable | Out-GridView
