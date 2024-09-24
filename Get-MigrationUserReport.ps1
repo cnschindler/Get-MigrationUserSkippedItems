@@ -2,7 +2,6 @@
 
 Param(
 [Parameter(Mandatory=$true)]
-[Parameter(ParameterSetName="Detect")]
 [System.IO.DirectoryInfo]$BasePath
 )
 
