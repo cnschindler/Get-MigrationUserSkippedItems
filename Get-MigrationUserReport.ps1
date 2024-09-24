@@ -90,11 +90,15 @@ foreach ($property in $Properties)
 # Get all Migrationusers with skipped items
 $MigrationUsersWithSkippedItems = Get-MigrationUser -Status Synced | Where-Object {$_.SkippedItemCount -gt 0}
 
+$Message = "Found $($MigrationUsersWithSkippedItems.Count) migrationusers with skipped items."
+Write-Host -ForegroundColor Green -Object $Message
+Write-LogFile -Message $Message
+
 # Loop through result
 ForEach ($User in $MigrationUsersWithSkippedItems)
 {
     $Message = "Currently processing user $($user.Identity)"
-    Write-Host -ForegroundColor Gree -Object $Message
+    Write-Host -ForegroundColor Green -Object $Message
     Write-LogFile -Message $Message
 
     # Get skipped items of current migrationuser    
@@ -123,14 +127,14 @@ ForEach ($User in $MigrationUsersWithSkippedItems)
 
 #Export the datable to CSV
 $Message = "Exporting datatable to CSV file $($CSVFullPath)"
-Write-Host -ForegroundColor Green -Object $Message
+Write-Host -ForegroundColor Magenta -Object $Message
 Write-LogFile -Message $Message
 
 try
 {
     $Datatable | Export-Csv -Path $CSVFullPath -NoTypeInformation -ErrorAction Stop
     $Message =  "CSV file successfully written."
-    Write-Host -ForegroundColor -Object $Message
+    Write-Host -ForegroundColor Green -Object $Message
     Write-LogFile -Message $Message
 }
 
