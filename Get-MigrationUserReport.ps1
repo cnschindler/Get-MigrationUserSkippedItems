@@ -1,5 +1,5 @@
 [cmdletbinding()]
-##
+
 Param(
 [Parameter(Mandatory=$true)]
 [Parameter(ParameterSetName="Detect")]
@@ -10,7 +10,7 @@ $LogFolderName = "Get-MigrationUserReport"
 [string]$LogPath = Join-Path -Path $BasePath -ChildPath $LogFolderName
 [string]$LogfileFullPath = Join-Path -Path $LogPath -ChildPath ("Get-MigrationUserReport_{0:yyyyMMdd-HHmmss}.log" -f [DateTime]::Now)
 $Script:NoLogging
-[string]$CSVFullPath = Join-Path -Path $LogPath -ChildPath ("Get-MigrationUserSkippedItems_{0:yyyyMMdd-HHmmss}.txt" -f [DateTime]::Now)
+[string]$CSVFullPath = Join-Path -Path $LogPath -ChildPath ("MigrationUserSkippedItems_{0:yyyyMMdd-HHmmss}.txt" -f [DateTime]::Now)
 
 function Write-LogFile
 {
@@ -81,20 +81,33 @@ Confirm-EXOModuleInstalled
 
 # Build a Datatable
 $Datatable = New-Object System.Data.DataTable
+$Datatable.Columns.Add("Identity")
 $Properties = @("Kind","ScoringClassifications","FolderName","Subject")
-
 foreach ($property in $Properties)
 {
     $Datatable.Columns.Add($property) | Out-Null
 }
 
-$Datatable.Columns.Add("Identity")
-
+# Get all Migrationusers with skipped items
 $MigrationUsersWithSkippedItems = Get-MigrationUser -Status Synced | Where-Object {$_.SkippedItemCount -gt 0}
 
 ForEach ($User in $MigrationUsersWithSkippedItems)
 {
+    $Message = "Currently processing user $($user.Identity)"
+    Write-Host -ForegroundColor Gree -Object $Message
+    Write-LogFile -Message $Message
+
+    # Get skipped items of current user    
     $SkippedItems = (Get-MigrationUserStatistics -Identity $User.Identity -IncludeSkippedItems).SkippedItems | Select-Object $Properties
+
+    $Message = "Found $($SkippedItems.Count) skipped items"
+    Write-Host -ForegroundColor Green -Object $Message
+    Write-LogFile -Message $Message
+
+    # Add each skipped item to the datatable
+    $Message = "Adding item details to datatable"
+    Write-Host -ForegroundColor Green -Object $Message
+    Write-LogFile -Message $Message
 
     foreach ($Item in $SkippedItems)
     {
@@ -108,4 +121,22 @@ ForEach ($User in $MigrationUsersWithSkippedItems)
     }
 }
 
-$Datatable | Out-GridView
+#Export the datable to CSV
+$Message = "Exporting datatable to CSV file $($CSVFullPath)"
+Write-Host -ForegroundColor Green -Object $Message
+Write-LogFile -Message $Message
+
+try
+{
+    $Datatable | Export-Csv -Path $CSVFullPath -NoTypeInformation -ErrorAction Stop
+    $Message =  "CSV file successfully written."
+    Write-Host -ForegroundColor -Object $Message
+    Write-LogFile -Message $Message
+}
+
+catch
+{
+    $Message = "Error writing CSV file."
+    Write-Host -ForegroundColor Red -Object ($Message + " $($_)")
+    Write-LogFile -Message $Message -ErrorInfo $_
+}
