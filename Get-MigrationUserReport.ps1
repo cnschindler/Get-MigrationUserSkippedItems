@@ -90,13 +90,14 @@ foreach ($property in $Properties)
 # Get all Migrationusers with skipped items
 $MigrationUsersWithSkippedItems = Get-MigrationUser -Status Synced | Where-Object {$_.SkippedItemCount -gt 0}
 
+# Loop through result
 ForEach ($User in $MigrationUsersWithSkippedItems)
 {
     $Message = "Currently processing user $($user.Identity)"
     Write-Host -ForegroundColor Gree -Object $Message
     Write-LogFile -Message $Message
 
-    # Get skipped items of current user    
+    # Get skipped items of current migrationuser    
     $SkippedItems = (Get-MigrationUserStatistics -Identity $User.Identity -IncludeSkippedItems).SkippedItems | Select-Object $Properties
 
     $Message = "Found $($SkippedItems.Count) skipped items"
