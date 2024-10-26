@@ -5,9 +5,9 @@ Param(
 [System.IO.DirectoryInfo]$BasePath
 )
 
-$LogFolderName = "Get-MigrationUserReport"
+$LogFolderName = "Get-MigrationUserSkippedItemsReport"
 [string]$LogPath = Join-Path -Path $BasePath -ChildPath $LogFolderName
-[string]$LogfileFullPath = Join-Path -Path $LogPath -ChildPath ("Get-MigrationUserReport_{0:yyyyMMdd-HHmmss}.log" -f [DateTime]::Now)
+[string]$LogfileFullPath = Join-Path -Path $LogPath -ChildPath ($LogFolderName + "_{0:yyyyMMdd-HHmmss}.log" -f [DateTime]::Now)
 $Script:NoLogging
 [string]$CSVFullPath = Join-Path -Path $LogPath -ChildPath ("MigrationUserSkippedItems_{0:yyyyMMdd-HHmmss}.txt" -f [DateTime]::Now)
 
