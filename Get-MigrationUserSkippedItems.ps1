@@ -70,7 +70,7 @@ function Confirm-EXOModuleInstalled
 
     else
     {
-        Write-Host -ForegroundColor Red -Object "Exchange Online Management Module not installed. Please install the module and connect to exchange online before using this script."
+        Write-Host -ForegroundColor Red -Object "Exchange Online Management Module not installed. Please install the module before using this script."
         Exit
     }
 
